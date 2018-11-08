@@ -30,13 +30,17 @@ class ServerBaseTest(TestCase):
 
     def test_base_scenario(self):
         task_id = self.send(b'ADD 1 5 12345')
+        
         self.assertEqual(b'YES', self.send(b'IN 1 ' + task_id))
+
+        self.assertEqual(b'OK', self.send(b'SAVE'))
 
         self.assertEqual(task_id + b' 5 12345', self.send(b'GET 1'))
         self.assertEqual(b'YES', self.send(b'IN 1 ' + task_id))
         self.assertEqual(b'YES', self.send(b'ACK 1 ' + task_id))
         self.assertEqual(b'NO', self.send(b'ACK 1 ' + task_id))
         self.assertEqual(b'NO', self.send(b'IN 1 ' + task_id))
+        self.assertEqual(b'OK', self.send(b'SAVE'))
 
     def test_two_tasks(self):
         first_task_id = self.send(b'ADD 1 5 12345')
@@ -76,28 +80,6 @@ class ServerBaseTest(TestCase):
         self.assertEqual(second_task_id + b' 7 1234567', self.send(b'GET 23'))
         self.assertEqual(b'YES', self.send(b'ACK 23 ' + second_task_id))
         self.assertEqual(b'NO', self.send(b'IN 23 ' + second_task_id))
-
-    def test_adding(self):
-        file = TaskQueueServer('adding')
-        struct = {'queue': 'A',
-                  'length': '3',
-                  'data': '123',
-                  'start_date': None,
-                  'id': '38'}
-        self.assertEqual(b'38', file.add(struct))
-        with open('adding', 'rb') as f:
-            self.assertEqual({'queue': 'A', 'length': '3', 'data': '123', 'start_date': None, 'id': '38'},
-                             pickle.load(f)[0])
-        path = os.path.join(os.path.abspath(os.path.dirname('task_queue')), 'adding')
-        os.remove(path)
-
-    #def test_long_input(self):
-    #    data = '12345' * 1000
-    #    data = '{} {}'.format(len(data), data)
-    #    data = data.encode('utf')
-    #    task_id = self.send(b'ADD 1 ' + data)
-    #    self.assertEqual(b'YES', self.send(b'IN 1 ' + task_id))
-    #    self.assertEqual(task_id + b' ' + data, self.send(b'GET 1'))
 
     def test_wrong_command(self):
         self.assertEqual(b'ERROR', self.send(b'ADDD 1 5 12345'))
